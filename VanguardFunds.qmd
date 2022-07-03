@@ -1,0 +1,256 @@
+---
+title: "Graphing Vangard Funds Using R"
+format: 
+   html:
+    toc: true
+    toc-depth: 3
+    self-contained: true
+    css: style.css
+comments:
+  hypothesis: false
+execute:
+  warning: false
+  message: false
+---
+
+::: {.callout-tip collapse="true"}
+## Usage Notes
+
+-   System setup:
+    -   Install `quarto` executable from <https://quarto.org>
+-   To compile report:
+    -   Inside RStudio: press `Render` from a recent version of RStudio
+:::
+
+
+<div>Author: Rick Dean</div>
+<div>Article date: July 3, 2022</div>
+
+<div class="abstract">
+  <p class="abstract">Abstract</p>
+  Taking a handful of Vanguard mutual funds perform data wrangling and graphing of adjusted closing prices using the R language.
+</div>
+
+## Load the Required R Packages
+
+```{r loadPackages}
+library(data.table, quietly = T)
+library(ggplot2, quietly = T)
+library(RtsaPkg, quietly = T)
+library(RplotterPkg, quietly = T)
+library(riingo, quietly = T)
+library(here, quietly = T)
+library(Hmisc, quietly = T)
+```
+
+## Vanguard Index Fund Closing Prices
+
+### Select the Vanguard index funds
+
+The following funds are selected for graphing.
+
+**Bonds**:
+
+<p>
+
+[VBILX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vbilx) -- Inter-Term Bond Index Fund Admiral Shares
+
+[VBIRX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vbirx) -- Vanguard Short-Term Bond Index Fund Admiral Shares
+
+</p>
+
+**Growth**:
+
+<p>
+
+[VIMAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vimax) -- Vanguard Mid-Cap Index Fund Admiral Shares
+
+[VFIAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vfiax) -- Vanguard 500 Index Fund Admiral Shares
+
+[VIGAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vigax) -- Vanguard Growth Index Fund Admiral Shares
+
+[VTSAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vtsax) -- Vanguard Total Stock Market Index Fund Admiral Shares
+
+</p>
+
+**Balanced-Income-Value**
+
+<p>
+
+[VWELX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vwelx) -- Vanguard Wellington Fund Investor Shares
+
+[VWINX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vwinx) -- Vanguard Wellesley Income Fund Investor Shares
+
+[VVIAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vviax) -- Vanguard Value Index Fund Admiral Shares
+
+</p>
+
+**Sector-Foreign**
+
+<p>
+
+[VGSLX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vgslx) -- Vanguard Real Estate Index Fund Admiral Shares
+
+[VGHCX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vghcx) -- Vanguard Health Care Fund Investor Shares
+
+[VFWAX](https://investor.vanguard.com/investment-products/mutual-funds/profile/vfwax) -- Vanguard FTSE All-World ex-US Index Fund Admiral Shares
+
+</p>
+
+### Establish data source
+
+Use [Tingo API](https://api.tiingo.com/) as the data source for closing prices. Read the Tingo key and establish a connection with the API:
+
+```{r connectTiingo}
+riingo::riingo_set_token(RtsaPkg::read_tingo_key())
+```
+
+### Define the tickers and start/end times of interest
+
+Create named vectors of ticker symbols and start/end times:
+
+```{r defineTickersTimes}
+tickers_v <- c(
+  VBILX = "Inter-term Bond Index Adm",
+  VIMAX = "Mid-Cap Index Fund Adm",
+  VFIAX = "500 Index Fund Adm",
+  VIGAX = "Growth Index Fund Adm",
+  VTSAX = "Total Stock Market Index Adm",
+  VVIAX = "Value Index Fund Adm",
+  VGSLX = "Real Estate Index Fund",
+  VWELX = "Wellington Fund Inv",
+  VFWAX = "FTSE All World ex-US Adm",
+  VGHCX = "Health Care Fund Inv",
+  VBIRX = "Short-Term Bond Index Adm",
+  VWINX = "Wellesley Income Fund Inv"
+)
+
+times_v <- c(
+  start = "2019-01-01",
+  end = "2022-05-30"
+)
+```
+
+### Get the closing prices
+
+Create a `data.table` of closing prices using `RtsaPkg::get_tiingo_stock_prices()` function:
+
+```{r getPrices}
+prices_dt <- RtsaPkg::get_tiingo_stock_prices(
+  symbols = names(tickers_v),
+  from = times_v[["start"]],
+  to = times_v[["end"]],
+  periodicity = "weekly"
+)
+```
+
+
+## Growth Plots
+
+### Define the `data.table` for growth funds
+
+```{r}
+growth_tickers_v <- c("VIMAX","VFIAX","VIGAX","VTSAX")
+growth_dt <- prices_dt[Symbol %in% growth_tickers_v,]
+growth_dt[, Symbol := factor(Symbol, levels = c("VIMAX","VFIAX","VIGAX","VTSAX"))]
+```
+
+### Plot the growth funds
+
+```{r, fig.width=22, fig.height=18}
+#| column: page
+
+RplotterPkg::multi_scatter_plot(
+  df = growth_dt,
+  factor_var = "Symbol",
+  factor_x = "Date",
+  aes_y = "AdjClose",
+  title = "Vanguard Growth Index Funds",
+  connect = TRUE,
+  col_width = 10,
+  row_height = 6
+)
+```
+
+## Balanced-Income-Value Plots
+
+### Define the `data.table` for balanced/income/value funds
+
+```{r}
+balanced_tickers_v <- c("VWELX","VWINX","VVIAX")
+balanced_dt <- prices_dt[Symbol %in% balanced_tickers_v,]
+balanced_dt[, Symbol := factor(Symbol, levels = c("VWELX","VWINX","VVIAX"))]
+```
+
+### Plot the balanced/income/value funds
+
+```{r, fig.width=22, fig.height=18}
+#| column: page
+
+RplotterPkg::multi_scatter_plot(
+  df = balanced_dt,
+  factor_var = "Symbol",
+  factor_x = "Date",
+  aes_y = "AdjClose",
+  title = "Vanguard Balanced/Income/Value Index Funds",
+  connect = TRUE,
+  col_width = 10,
+  row_height = 6
+)
+```
+
+## Bonds Plots
+
+### Define a `data.table` for the bond funds
+
+```{r}
+bond_tickers_v <- c("VBILX","VBIRX")
+bond_dt <- prices_dt[Symbol %in% bond_tickers_v,]
+bond_dt[, Symbol := factor(Symbol, levels = c("VBILX","VBIRX"))]
+```
+
+### Plot the bond funds
+
+```{r, fig.width=22, fig.height=18}
+#| column: page
+
+RplotterPkg::multi_scatter_plot(
+  df = bond_dt,
+  factor_var = "Symbol",
+  factor_x = "Date",
+  aes_y = "AdjClose",
+  title = "Vanguard Bond Index Funds",
+  connect = TRUE,
+  col_width = 10,
+  row_height = 6
+)
+```
+
+## Sector-Foreign Plots
+
+### Define the `data.table` for the sector/foreign funds
+
+```{r}
+sector_tickers_v <- c("VGSLX","VGHCX","VFWAX")
+sector_dt <- prices_dt[Symbol %in% sector_tickers_v,]
+sector_dt[, Symbol := factor(Symbol, levels = c("VGSLX","VGHCX","VFWAX"))]
+```
+
+### Plot the sector/foreign funds
+
+
+```{r, fig.width=22, fig.height=18}
+#| column: page
+
+RplotterPkg::multi_scatter_plot(
+  df = sector_dt,
+  factor_var = "Symbol",
+  factor_x = "Date",
+  aes_y = "AdjClose",
+  title = "Vanguard Sector/Foreign Index Funds",
+  connect = TRUE,
+  col_width = 10,
+  row_height = 6
+)
+```
+
