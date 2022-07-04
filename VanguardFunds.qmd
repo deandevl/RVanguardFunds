@@ -5,6 +5,11 @@ format:
     toc: true
     toc-depth: 3
     self-contained: true
+    code-block-bg: "#f1f3f5"
+    code-block-border-left: "#31BAE9"
+    fig-cap-location: margin
+    mainfont: Verdana
+    theme: journal
     css: style.css
 comments:
   hypothesis: false
@@ -22,7 +27,6 @@ execute:
     -   Inside RStudio: press `Render` from a recent version of RStudio
 :::
 
-
 <div>Author: Rick Dean</div>
 <div>Article date: July 3, 2022</div>
 
@@ -33,14 +37,12 @@ execute:
 
 ## Load the Required R Packages
 
-```{r loadPackages}
+```{r loadPackages, message=FALSE, warning=FALSE}
 library(data.table, quietly = T)
 library(ggplot2, quietly = T)
-library(RtsaPkg, quietly = T)
 library(RplotterPkg, quietly = T)
 library(riingo, quietly = T)
 library(here, quietly = T)
-library(Hmisc, quietly = T)
 ```
 
 ## Vanguard Index Fund Closing Prices
@@ -153,22 +155,31 @@ prices_dt <- RtsaPkg::get_tiingo_stock_prices(
 growth_tickers_v <- c("VIMAX","VFIAX","VIGAX","VTSAX")
 growth_dt <- prices_dt[Symbol %in% growth_tickers_v,]
 growth_dt[, Symbol := factor(Symbol, levels = c("VIMAX","VFIAX","VIGAX","VTSAX"))]
+growth_dt[, Title := fcase(
+                       Symbol == "VIMAX", tickers_v[["VIMAX"]],
+                       Symbol == "VFIAX", tickers_v[["VFIAX"]],
+                       Symbol == "VIGAX", tickers_v[["VIGAX"]],
+                       Symbol == "VTSAX", tickers_v[["VTSAX"]]
+                     )]
+growth_dt[, Title := as.factor(Title)]
 ```
 
 ### Plot the growth funds
 
-```{r, fig.width=22, fig.height=18}
+```{r}
 #| column: page
+#| fig-height: 8
+#| fig-width: 11
+#| fig-cap: AdjClose Prices for Vanguard Growth Index Funds
 
 RplotterPkg::multi_scatter_plot(
   df = growth_dt,
-  factor_var = "Symbol",
+  factor_var = "Title",
   factor_x = "Date",
   aes_y = "AdjClose",
-  title = "Vanguard Growth Index Funds",
   connect = TRUE,
-  col_width = 10,
-  row_height = 6
+  col_width = 5.5,
+  row_height = 4
 )
 ```
 
@@ -180,22 +191,30 @@ RplotterPkg::multi_scatter_plot(
 balanced_tickers_v <- c("VWELX","VWINX","VVIAX")
 balanced_dt <- prices_dt[Symbol %in% balanced_tickers_v,]
 balanced_dt[, Symbol := factor(Symbol, levels = c("VWELX","VWINX","VVIAX"))]
+balanced_dt[, Title := fcase(
+                       Symbol == "VWELX", tickers_v[["VWELX"]],
+                       Symbol == "VWINX", tickers_v[["VWINX"]],
+                       Symbol == "VVIAX", tickers_v[["VVIAX"]]
+                     )]
+balanced_dt[, Title := as.factor(Title)]
 ```
 
 ### Plot the balanced/income/value funds
 
 ```{r, fig.width=22, fig.height=18}
 #| column: page
+#| fig-height: 8
+#| fig-width: 11
+#| fig-cap: AdjClose Prices for Vanguard Balanced/Income/Value Index Funds
 
 RplotterPkg::multi_scatter_plot(
   df = balanced_dt,
-  factor_var = "Symbol",
+  factor_var = "Title",
   factor_x = "Date",
   aes_y = "AdjClose",
-  title = "Vanguard Balanced/Income/Value Index Funds",
   connect = TRUE,
-  col_width = 10,
-  row_height = 6
+  col_width = 5.5,
+  row_height = 4
 )
 ```
 
@@ -207,22 +226,29 @@ RplotterPkg::multi_scatter_plot(
 bond_tickers_v <- c("VBILX","VBIRX")
 bond_dt <- prices_dt[Symbol %in% bond_tickers_v,]
 bond_dt[, Symbol := factor(Symbol, levels = c("VBILX","VBIRX"))]
+bond_dt[, Title := fcase(
+                       Symbol == "VBILX", tickers_v[["VBILX"]],
+                       Symbol == "VBIRX", tickers_v[["VBIRX"]]
+                     )]
+bond_dt[, Title := as.factor(Title)]
 ```
 
 ### Plot the bond funds
 
 ```{r, fig.width=22, fig.height=18}
 #| column: page
+#| fig-height: 4
+#| fig-width: 11
+#| fig-cap: AdjClose Prices for Vanguard Bond Index Funds
 
 RplotterPkg::multi_scatter_plot(
   df = bond_dt,
-  factor_var = "Symbol",
+  factor_var = "Title",
   factor_x = "Date",
   aes_y = "AdjClose",
-  title = "Vanguard Bond Index Funds",
   connect = TRUE,
-  col_width = 10,
-  row_height = 6
+  col_width = 5.5,
+  row_height = 4
 )
 ```
 
@@ -234,6 +260,12 @@ RplotterPkg::multi_scatter_plot(
 sector_tickers_v <- c("VGSLX","VGHCX","VFWAX")
 sector_dt <- prices_dt[Symbol %in% sector_tickers_v,]
 sector_dt[, Symbol := factor(Symbol, levels = c("VGSLX","VGHCX","VFWAX"))]
+sector_dt[, Title := fcase(
+                       Symbol == "VGSLX", tickers_v[["VGSLX"]],
+                       Symbol == "VGHCX", tickers_v[["VGHCX"]],
+                       Symbol == "VFWAX", tickers_v[["VFWAX"]]
+                     )]
+sector_dt[, Title := as.factor(Title)]
 ```
 
 ### Plot the sector/foreign funds
@@ -241,16 +273,18 @@ sector_dt[, Symbol := factor(Symbol, levels = c("VGSLX","VGHCX","VFWAX"))]
 
 ```{r, fig.width=22, fig.height=18}
 #| column: page
+#| fig-height: 8
+#| fig-width: 11
+#| fig-cap: AdjClose Prices for Vanguard Sector/Foreign Index Funds
 
 RplotterPkg::multi_scatter_plot(
   df = sector_dt,
-  factor_var = "Symbol",
+  factor_var = "Title",
   factor_x = "Date",
   aes_y = "AdjClose",
-  title = "Vanguard Sector/Foreign Index Funds",
   connect = TRUE,
-  col_width = 10,
-  row_height = 6
+  col_width = 5.5,
+  row_height = 4
 )
 ```
 
